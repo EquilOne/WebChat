@@ -1,6 +1,5 @@
 import asyncio
 
-from openai.types.responses import EasyInputMessage, Response
 from rich.console import Console, Group
 from rich.live import Live
 from rich.panel import Panel
@@ -9,6 +8,7 @@ from rich.table import Table
 from rich.text import Text
 
 from custom_args import args
+from prompts import system_prompt
 
 # from input import ChatInputApp
 from response import get_response
@@ -17,38 +17,27 @@ console = Console(width=100)
 status = Status("Crunching the tokens...", spinner="pipe", spinner_style="bold white")
 
 
-# def construct_panel(content, **args):
-#     return Panel(content, **args)
-
-
 async def main():
-    # if not args.one_shot:
-    #     await ChatInputApp().run_async()
-    #     return
     if not args.user_prompt:
         raise RuntimeError("One-shot (CLI mode) requires a prompt argument")
 
-    resp: Response | None = None
-    history: list = []
+    history: list = [{"role": "developer", "content": system_prompt}]
     input_text = args.user_prompt
-    ai_response = ""
 
-    # history.append({"role": "user", "content": input})
-    history.append(EasyInputMessage(role="user", content=input_text))
+    history.append({"role": "user", "content": input_text})
 
     if args.dry_run:
         return
 
     with Live(Panel(Group(status), expand=False), console=console, transient=True):
-        resp = await get_response(history)
-        if resp.status == "failed" or resp.error:
-            raise RuntimeError(f"API call failed: {resp.error}")
-        ai_response = resp.output_text
-        history.append(EasyInputMessage(role="assistant", content=ai_response))
+        resp = await get_response(history, stream=False)
+        if resp.choices[0].message.refusal:
+            raise RuntimeError(f"API call failed: {resp.choices[0].message.refusal}")
+        author_role = resp.choices[0].message.role
+        ai_response = resp.choices[0].message.content or ""
+        history.append({"role": author_role, "content": ai_response})
 
         # print("resp:", resp.__dict__)
-        if resp is None:
-            raise RuntimeError("No response returned")
         assistant_response = Text()
         response_info = Text()
         response_info.append("User prompt: \n", style="bold")
@@ -62,9 +51,12 @@ async def main():
             # print("User prompt: ", input)
             # print("Prompt tokens: ", usage.input_tokens)
             # print("Response tokens: ", usage.output_tokens)
-            prompt_tokens = usage.input_tokens
-            resp_tokens = usage.output_tokens
-            reasoning_tokens = usage.output_tokens_details.reasoning_tokens
+            prompt_tokens = usage.prompt_tokens
+            resp_tokens = usage.completion_tokens
+            if usage.completion_tokens_details:
+                reasoning_tokens = usage.completion_tokens_details.reasoning_tokens
+            else:
+                reasoning_tokens = 0
 
             tokens_table = Table(title="Tokens", title_justify="left")
             tokens_table.add_column("Token Type", justify="left", no_wrap=True)
