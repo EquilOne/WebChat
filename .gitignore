@@ -1,0 +1,82 @@
+# === Project Planning Documents ===
+# Working notes and lesson plans — not source code
+PLAN.md
+WebChatLessonPlan.md
+
+# === OS Files ===
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# === Editor/IDE ===
+# Prefer global ~/.gitignore_global for personal IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.~lock*
+
+# === Logs and Temp ===
+*.log
+*.tmp
+*.temp
+
+# === Python (Backend) ===
+# Dependencies
+.venv/
+env/
+venv/
+
+# Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Build artifacts
+*.so
+*.egg-info/
+dist/
+build/
+
+# Testing
+.pytest_cache/
+.coverage
+.coverage.*
+.hypothesis/
+nosetests.xml
+coverage.xml
+*.cover
+
+# Linting and caching
+.ruff_cache/
+.cache
+.tox/
+
+# Misc Python
+pip-log.txt
+pip-delete-this-directory.txt
+
+# === Node.js / Frontend ===
+# FrontEnd/ will contain a Next.js project (per project plan)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.next/
+.cache/
+out/
+
+# === Environment and Secrets ===
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+credentials.*
