@@ -1,4 +1,5 @@
 import os
+from typing import Literal, overload
 
 from dotenv import load_dotenv
 from openai import AsyncOpenAI, AsyncStream
@@ -18,6 +19,24 @@ client = AsyncOpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=api_key,
 )
+
+
+@overload
+async def get_response(
+    messages: list[ChatCompletionMessageParam], stream: Literal[True]
+) -> AsyncStream[ChatCompletionChunk]: ...
+
+
+@overload
+async def get_response(
+    messages: list[ChatCompletionMessageParam], stream: Literal[False]
+) -> ChatCompletion: ...
+
+
+@overload
+async def get_response(
+    messages: list[ChatCompletionMessageParam], stream: bool = True
+) -> AsyncStream[ChatCompletionChunk] | ChatCompletion: ...
 
 
 async def get_response(
