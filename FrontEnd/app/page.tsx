@@ -235,7 +235,7 @@ export default function Chat() {
                   }}
                 >
                   <strong>{m.role === "user" ? "You" : "AI"}:</strong>
-                  <div className="prose prose-sm mt-1 max-w-none"
+                  <div className="prose prose-sm mt-1 w-full max-w-full"
                     style={{
                       color: "var(--rp-text)",
                       "--tw-prose-body": "var(--rp-text)",
@@ -250,7 +250,7 @@ export default function Chat() {
                       remarkPlugins={[remarkGfm]}
                       components={{
                         table: ({ children }) => (
-                          <div className="overflow-x-auto">
+                          <div className="overflow-x-auto w-full max-w-full">
                             <table>{children}</table>
                           </div>
                         ),
