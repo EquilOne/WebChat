@@ -15,6 +15,7 @@ export default function Chat() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const shouldAutoScrollRef = useRef(true);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const [sidebarContent, setSidebarContent] = useState("");
   const [sidebarLoading, setSidebarLoading] = useState(true);
@@ -143,6 +144,7 @@ export default function Chat() {
     } finally {
       setStreaming(false);
       abortRef.current = null;
+      inputRef.current?.focus();
     }
   };
 
@@ -269,6 +271,7 @@ export default function Chat() {
               style={{ background: "var(--rp-base)" }}
             >
               <input
+                ref={inputRef}
                 className="flex-1 border rounded p-2 border-(--rp-highlight-high) hover:border-(--rp-rose) hover:shadow-[0_0_8px_var(--rp-rose)] focus:border-(--rp-rose) focus:shadow-[0_0_3px_var(--rp-rose)] focus:hover:shadow-[0_0_8px_var(--rp-rose)] focus:outline-none transition-colors duration-200"
                 style={{
                   background: "var(--rp-surface)",
@@ -277,8 +280,14 @@ export default function Chat() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && send()}
+                onBlur={(e) => {
+                  if (e.relatedTarget === null) {
+                    e.target.focus();
+                  }
+                }}
                 disabled={streaming}
                 placeholder="Type your message..."
+                autoFocus
               />
               <button
                 className="text-white px-4 py-2 rounded disabled:opacity-50"
