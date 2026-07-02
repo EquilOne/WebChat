@@ -1,12 +1,11 @@
+from backend.prompts import app_description, sidebar_prompt, system_prompt
+from backend.response import get_response
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from openai.types.chat import ChatCompletionMessageParam
 from pydantic import BaseModel
-
-from prompts import app_description, sidebar_prompt, system_prompt
-from response import get_response
 
 load_dotenv()
 
