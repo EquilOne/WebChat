@@ -126,106 +126,113 @@ export default function Chat() {
   );
 
   return (
-    <div className="flex h-screen w-full">
-      <aside
-        className="hidden md:block w-72 shrink-0 overflow-y-auto p-4 border-r"
-        style={{
-          background: "var(--rp-base)",
-          borderColor: "var(--rp-highlight-high)",
-        }}
-      >
-        <h2 className="font-semibold mb-3" style={{ color: "var(--rp-text)" }}>
-          About
-        </h2>
-        {sidebarInner}
-      </aside>
-
-      <div className="flex-1 flex flex-col">
-        <div
-          className="md:hidden flex justify-center gap-2 p-2 border-b"
+    <div className="flex h-screen w-full bg-(--rp-base)">
+      <div className="flex mx-auto w-full max-w-350">
+        <aside
+          className="hidden md:block w-72 shrink-0 overflow-y-auto p-4 border-r"
           style={{
             background: "var(--rp-base)",
             borderColor: "var(--rp-highlight-high)",
           }}
         >
-          <button
-            onClick={() => setTab("chat")}
-            className="px-5 py-1.5 rounded-full text-sm font-medium transition-colors"
-            style={{
-              background:
-                tab === "chat" ? "var(--rp-rose)" : "var(--rp-highlight-med)",
-              color: tab === "chat" ? "#fff" : "var(--rp-text)",
-            }}
-          >
-            Chat
-          </button>
-          <button
-            onClick={() => setTab("about")}
-            className="px-5 py-1.5 rounded-full text-sm font-medium transition-colors"
-            style={{
-              background:
-                tab === "about" ? "var(--rp-rose)" : "var(--rp-highlight-med)",
-              color: tab === "about" ? "#fff" : "var(--rp-text)",
-            }}
+          <h2
+            className="font-semibold mb-3"
+            style={{ color: "var(--rp-text)" }}
           >
             About
-          </button>
-        </div>
+          </h2>
+          {sidebarInner}
+        </aside>
 
-        <div
-          className={`${tab === "about" ? "hidden md:flex" : "flex"} flex-1 flex-col w-full mx-auto px-3 sm:px-0 sm:max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl 2xl:max-w-5xl bg-linear-to-br from-(--rp-base) to-(--rp-overlay)`}
-        >
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.map((m, i) => (
-              <div
-                key={i}
-                className={`p-3 rounded w-fit max-w-[85%] sm:max-w-[75%] min-w-30 ${m.role === "user" ? "ml-auto mr-3 sm:mr-12" : "mr-auto ml-3 sm:ml-12"}`}
-                style={{
-                  background:
-                    m.role === "user"
-                      ? "var(--rp-pine)"
-                      : "var(--rp-highlight-med)",
-                  color: m.role === "user" ? "#f4ede8" : "var(--rp-text)",
-                }}
-              >
-                <strong>{m.role === "user" ? "You" : "AI"}:</strong>
-                <p className="mt-1">{m.content}</p>
-              </div>
-            ))}
+        <div className="flex-1 flex flex-col">
+          <div
+            className="md:hidden flex justify-center gap-2 p-2 border-b"
+            style={{
+              background: "var(--rp-base)",
+              borderColor: "var(--rp-highlight-high)",
+            }}
+          >
+            <button
+              onClick={() => setTab("chat")}
+              className="px-5 py-1.5 rounded-full text-sm font-medium transition-colors"
+              style={{
+                background:
+                  tab === "chat" ? "var(--rp-rose)" : "var(--rp-highlight-med)",
+                color: tab === "chat" ? "#fff" : "var(--rp-text)",
+              }}
+            >
+              Chat
+            </button>
+            <button
+              onClick={() => setTab("about")}
+              className="px-5 py-1.5 rounded-full text-sm font-medium transition-colors"
+              style={{
+                background:
+                  tab === "about"
+                    ? "var(--rp-rose)"
+                    : "var(--rp-highlight-med)",
+                color: tab === "about" ? "#fff" : "var(--rp-text)",
+              }}
+            >
+              About
+            </button>
           </div>
 
           <div
-            className="flex gap-2 p-4 mx-3 sm:mx-6 mb-4 rounded-xl shadow-lg border border-(--rp-highlight-high) sticky bottom-0"
+            className={`${tab === "about" ? "hidden md:flex" : "flex"} flex-1 flex-col w-full px-3 sm:px-0 bg-linear-to-br from-(--rp-base) to-(--rp-overlay)`}
+          >
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {messages.map((m, i) => (
+                <div
+                  key={i}
+                  className={`p-3 rounded w-fit max-w-[85%] sm:max-w-[75%] min-w-30 ${m.role === "user" ? "ml-auto mr-3 sm:mr-12" : "mr-auto ml-3 sm:ml-12"}`}
+                  style={{
+                    background:
+                      m.role === "user"
+                        ? "var(--rp-pine)"
+                        : "var(--rp-highlight-med)",
+                    color: m.role === "user" ? "#f4ede8" : "var(--rp-text)",
+                  }}
+                >
+                  <strong>{m.role === "user" ? "You" : "AI"}:</strong>
+                  <p className="mt-1">{m.content}</p>
+                </div>
+              ))}
+            </div>
+
+            <div
+              className="flex gap-2 p-4 mx-3 sm:mx-6 mb-4 rounded-xl shadow-lg border border-(--rp-highlight-high) sticky bottom-0"
+              style={{ background: "var(--rp-base)" }}
+            >
+              <input
+                className="flex-1 border rounded p-2 border-(--rp-highlight-high) hover:border-(--rp-rose) hover:shadow-[0_0_8px_var(--rp-rose)] focus:border-(--rp-rose) focus:shadow-[0_0_3px_var(--rp-rose)] focus:hover:shadow-[0_0_8px_var(--rp-rose)] focus:outline-none transition-colors duration-200"
+                style={{
+                  background: "var(--rp-surface)",
+                  color: "var(--rp-text)",
+                }}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && send()}
+                disabled={streaming}
+                placeholder="Type your message..."
+              />
+              <button
+                className="text-white px-4 py-2 rounded disabled:opacity-50"
+                style={{ background: "var(--rp-iris)" }}
+                onClick={send}
+                disabled={streaming}
+              >
+                {streaming ? "..." : "Send"}
+              </button>
+            </div>
+          </div>
+
+          <div
+            className={`${tab === "chat" ? "hidden" : ""} md:hidden flex-1 overflow-y-auto p-4`}
             style={{ background: "var(--rp-base)" }}
           >
-            <input
-              className="flex-1 border rounded p-2 border-(--rp-highlight-high) hover:border-(--rp-rose) hover:shadow-[0_0_8px_var(--rp-rose)] focus:border-(--rp-rose) focus:shadow-[0_0_3px_var(--rp-rose)] focus:hover:shadow-[0_0_8px_var(--rp-rose)] focus:outline-none transition-colors duration-200"
-              style={{
-                background: "var(--rp-surface)",
-                color: "var(--rp-text)",
-              }}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && send()}
-              disabled={streaming}
-              placeholder="Type your message..."
-            />
-            <button
-              className="text-white px-4 py-2 rounded disabled:opacity-50"
-              style={{ background: "var(--rp-iris)" }}
-              onClick={send}
-              disabled={streaming}
-            >
-              {streaming ? "..." : "Send"}
-            </button>
+            {sidebarInner}
           </div>
-        </div>
-
-        <div
-          className={`${tab === "chat" ? "hidden" : ""} md:hidden flex-1 overflow-y-auto p-4`}
-          style={{ background: "var(--rp-base)" }}
-        >
-          {sidebarInner}
         </div>
       </div>
     </div>
