@@ -50,7 +50,8 @@ async def chat(request: ChatRequest):
             token = chunk.choices[0].delta.content
             if token:
                 collected.append(token)
-                yield f"data: {token}\n\n"
+                for line in token.split("\n"):
+                    yield f"data: {line}\n\n"
         yield "data: [DONE]\n\n"
 
     response = StreamingResponse(stream(), media_type="text/event-stream")
@@ -67,7 +68,8 @@ async def sidebar():
         async for chunk in completion:
             token = chunk.choices[0].delta.content
             if token:
-                yield f"data: {token}\n\n"
+                for line in token.split("\n"):
+                    yield f"data: {line}\n\n"
         yield "data: [DONE]\n\n"
 
     return StreamingResponse(stream(), media_type="text/event-stream")
