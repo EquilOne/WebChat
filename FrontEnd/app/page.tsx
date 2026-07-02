@@ -60,7 +60,19 @@ export default function Chat() {
     return () => ctrl.abort();
   }, []);
 
-  const handleScroll = () => {
+// Keep input focused when clicking non-interactive areas
+useEffect(() => {
+  inputRef.current?.focus();
+  const handleFocusOut = (e: FocusEvent) => {
+    if (e.relatedTarget === null) {
+      inputRef.current?.focus();
+    }
+  };
+  document.addEventListener("focusout", handleFocusOut);
+  return () => document.removeEventListener("focusout", handleFocusOut);
+}, []);
+
+const handleScroll = () => {
     const el = messagesContainerRef.current;
     if (!el) return;
     const threshold = 50;
@@ -280,14 +292,8 @@ export default function Chat() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && send()}
-                onBlur={(e) => {
-                  if (e.relatedTarget === null) {
-                    e.target.focus();
-                  }
-                }}
                 disabled={streaming}
                 placeholder="Type your message..."
-                autoFocus
               />
               <button
                 className="text-white px-4 py-2 rounded disabled:opacity-50"
