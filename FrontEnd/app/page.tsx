@@ -11,6 +11,9 @@ export default function Chat() {
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
 
   const [sidebarContent, setSidebarContent] = useState("");
   const [sidebarLoading, setSidebarLoading] = useState(true);
@@ -54,6 +57,20 @@ export default function Chat() {
     })();
     return () => ctrl.abort();
   }, []);
+
+  const handleScroll = () => {
+    const el = messagesContainerRef.current;
+    if (!el) return;
+    const threshold = 50;
+    const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+    setShouldAutoScroll(isNearBottom);
+  };
+
+  useEffect(() => {
+    if (shouldAutoScroll) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, shouldAutoScroll]);
 
   const send = async () => {
     if (!input.trim() || streaming) return;
@@ -139,7 +156,7 @@ export default function Chat() {
     <div className="flex h-screen w-full bg-(--rp-base)">
       <div className="flex mx-auto w-full max-w-350">
         <aside
-          className="hidden md:block w-72 shrink-0 overflow-y-auto p-4 border-r"
+          className="hidden md:block w-72 shrink-0 overflow-hidden p-4 border-r"
           style={{
             background: "var(--rp-base)",
             borderColor: "var(--rp-highlight-high)",
@@ -191,7 +208,10 @@ export default function Chat() {
           <div
             className={`${tab === "about" ? "hidden md:flex" : "flex"} flex-1 flex-col w-full px-3 sm:px-0 bg-linear-to-br from-(--rp-base) to-(--rp-overlay)`}
           >
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div
+              ref={messagesContainerRef}
+              onScroll={handleScroll}
+              className="flex-1 overflow-y-auto p-4 space-y-4">
               {messages.map((m, i) => (
                 <div
                   key={i}
@@ -222,6 +242,7 @@ export default function Chat() {
                   </div>
                 </div>
               ))}
+              <div ref={messagesEndRef} />
             </div>
 
             <div
