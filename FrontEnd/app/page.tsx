@@ -128,7 +128,7 @@ export default function Chat() {
         className="text-sm whitespace-pre-line leading-relaxed"
         style={{ color: "var(--rp-text)" }}
       >
-        {sidebarContent}
+        {sidebarContent.replace(/  - /g, "\n- ")}
       </div>
     </>
   );
