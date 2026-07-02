@@ -7,7 +7,7 @@ from fastapi.responses import StreamingResponse
 from openai.types.chat import ChatCompletionMessageParam
 from pydantic import BaseModel
 
-from prompts import system_prompt
+from prompts import app_description, sidebar_prompt, system_prompt
 from response import get_response
 
 load_dotenv()
@@ -46,6 +46,10 @@ async def chat(request: ChatRequest, x_session_id: str | None = Header(None)):
     history = sessions[session_id]
     full_messages = [
         {"role": "system", "content": system_prompt},
+        {
+            "role": "system",
+            "content": f"## About This Application\n\n{app_description}",
+        },
         *history,
         *messages,
     ]
@@ -67,3 +71,19 @@ async def chat(request: ChatRequest, x_session_id: str | None = Header(None)):
     response = StreamingResponse(stream(), media_type="text/event-stream")
     response.headers["X-Session-ID"] = session_id
     return response
+
+
+@app.get("/sidebar")
+async def sidebar():
+    async def stream():
+        completion = await get_response(
+            [{"role": "system", "content": sidebar_prompt}],
+            stream=True,
+        )
+        async for chunk in completion:
+            token = chunk.choices[0].delta.content
+            if token:
+                yield f"data: {token}\n\n"
+        yield "data: [DONE]\n\n"
+
+    return StreamingResponse(stream(), media_type="text/event-stream")
