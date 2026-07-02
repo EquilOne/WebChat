@@ -1,7 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { MessageBubble } from "./message-bubble";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 type Message = { role: "user" | "assistant"; content: string };
@@ -13,7 +12,6 @@ export default function Chat() {
   const abortRef = useRef<AbortController | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const shouldAutoScrollRef = useRef(true);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -64,36 +62,31 @@ export default function Chat() {
     return () => ctrl.abort();
   }, []);
 
-// Keep input focused when clicking non-interactive areas
-useEffect(() => {
-  inputRef.current?.focus();
-  const handleFocusOut = (e: FocusEvent) => {
-    if (e.relatedTarget === null) {
-      inputRef.current?.focus();
-    }
-  };
-  document.addEventListener("focusout", handleFocusOut);
-  return () => document.removeEventListener("focusout", handleFocusOut);
-}, []);
+  // Focus input on mount
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
-const handleScroll = () => {
+  const handleScroll = () => {
     const el = messagesContainerRef.current;
     if (!el) return;
     const threshold = 50;
-    const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
-    setShouldAutoScroll(isNearBottom);
+    const isNearBottom =
+      el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
     shouldAutoScrollRef.current = isNearBottom;
   };
 
   useEffect(() => {
-    if (shouldAutoScroll) {
+    if (shouldAutoScrollRef.current) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages, shouldAutoScroll]);
+  }, [messages]);
 
   const scrollToBottom = (smooth = false) => {
     if (shouldAutoScrollRef.current) {
-      messagesEndRef.current?.scrollIntoView({ behavior: smooth ? "smooth" : "instant" });
+      messagesEndRef.current?.scrollIntoView({
+        behavior: smooth ? "smooth" : "instant",
+      });
     }
   };
 
@@ -200,9 +193,9 @@ const handleScroll = () => {
 
   return (
     <div className="flex h-screen w-full bg-(--rp-base)">
-      <div className="flex mx-auto w-full max-w-350">
+      <div className="flex mx-auto w-full max-w-[1400px]">
         <aside
-          className="hidden md:block w-72 shrink-0 overflow-hidden p-4 border-r"
+          className="hidden md:block w-72 shrink-0 overflow-hidden p-4 border"
           style={{
             background: "var(--rp-base)",
             borderColor: "var(--rp-highlight-high)",
@@ -219,6 +212,8 @@ const handleScroll = () => {
 
         <div className="flex-1 flex flex-col">
           <div
+            role="tablist"
+            aria-label="Navigation tabs"
             className="md:hidden flex justify-center gap-2 p-2 border-b"
             style={{
               background: "var(--rp-base)",
@@ -226,6 +221,10 @@ const handleScroll = () => {
             }}
           >
             <button
+              id="chat-tab"
+              role="tab"
+              aria-selected={tab === "chat"}
+              type="button"
               onClick={() => setTab("chat")}
               className="px-5 py-1.5 rounded-full text-sm font-medium transition-colors"
               style={{
@@ -237,6 +236,10 @@ const handleScroll = () => {
               Chat
             </button>
             <button
+              id="about-tab"
+              role="tab"
+              aria-selected={tab === "about"}
+              type="button"
               onClick={() => setTab("about")}
               className="px-5 py-1.5 rounded-full text-sm font-medium transition-colors"
               style={{
@@ -252,50 +255,20 @@ const handleScroll = () => {
           </div>
 
           <div
+            role="tabpanel"
+            aria-labelledby="chat-tab"
             className={`${tab === "about" ? "hidden md:flex" : "flex"} flex-1 flex-col min-h-0 w-full px-3 sm:px-0 bg-linear-to-br from-(--rp-base) to-(--rp-overlay)`}
           >
             <div
               ref={messagesContainerRef}
               onScroll={handleScroll}
-              className="flex-1 overflow-y-auto min-h-0 p-4 space-y-4">
+              role="log"
+              aria-live="polite"
+              aria-relevant="additions"
+              className="flex-1 overflow-y-auto min-h-0 p-4 space-y-4"
+            >
               {messages.map((m, i) => (
-                <div
-                  key={i}
-                  className={`p-3 rounded w-fit max-w-[85%] sm:max-w-[75%] min-w-30 ${m.role === "user" ? "ml-auto mr-3 sm:mr-12" : "mr-auto ml-3 sm:ml-12"}`}
-                  style={{
-                    background:
-                      m.role === "user"
-                        ? "var(--rp-pine)"
-                        : "var(--rp-highlight-med)",
-                    color: m.role === "user" ? "#f4ede8" : "var(--rp-text)",
-                  }}
-                >
-                  <strong>{m.role === "user" ? "You" : "AI"}:</strong>
-                  <div className="prose prose-sm mt-1 w-full max-w-full"
-                    style={{
-                      color: "var(--rp-text)",
-                      "--tw-prose-body": "var(--rp-text)",
-                      "--tw-prose-headings": "var(--rp-text)",
-                      "--tw-prose-bold": "var(--rp-text)",
-                      "--tw-prose-links": "var(--rp-rose)",
-                      "--tw-prose-code": "var(--rp-rose)",
-                      "--tw-prose-pre-bg": "var(--rp-surface)",
-                    } as React.CSSProperties}
-                  >
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      components={{
-                        table: ({ children }) => (
-                          <div className="overflow-x-auto w-full max-w-full">
-                            <table>{children}</table>
-                          </div>
-                        ),
-                      }}
-                    >
-                      {m.content}
-                    </ReactMarkdown>
-                  </div>
-                </div>
+                <MessageBubble key={i} message={m} />
               ))}
               <div ref={messagesEndRef} />
             </div>
@@ -306,6 +279,7 @@ const handleScroll = () => {
             >
               <input
                 ref={inputRef}
+                aria-label="Chat message"
                 className="flex-1 border rounded p-2 border-(--rp-highlight-high) hover:border-(--rp-rose) hover:shadow-[0_0_8px_var(--rp-rose)] focus:border-(--rp-rose) focus:shadow-[0_0_3px_var(--rp-rose)] focus:hover:shadow-[0_0_8px_var(--rp-rose)] focus:outline-none transition-colors duration-200"
                 style={{
                   background: "var(--rp-surface)",
@@ -313,11 +287,13 @@ const handleScroll = () => {
                 }}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && send()}
+                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
                 disabled={streaming}
                 placeholder="Type your message..."
               />
               <button
+                type="button"
+                aria-label="Send message"
                 className="text-white px-4 py-2 rounded disabled:opacity-50"
                 style={{ background: "var(--rp-iris)" }}
                 onClick={send}
@@ -329,6 +305,8 @@ const handleScroll = () => {
           </div>
 
           <div
+            role="tabpanel"
+            aria-labelledby="about-tab"
             className={`${tab === "chat" ? "hidden" : ""} md:hidden flex-1 overflow-y-auto p-4`}
             style={{ background: "var(--rp-base)" }}
           >
