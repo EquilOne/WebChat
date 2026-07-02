@@ -1,111 +1,159 @@
 # WebChat
 
-A personal learning project: an LLM chat webapp powered by OpenRouter, with a Python/FastAPI backend and a planned React/Next.js frontend.
+A real-time AI chat application powered by OpenRouter, built with Next.js 16 and Python FastAPI.
 
-## What this does
+## Features
 
-WebChat is a streaming chat interface for language models served through the OpenRouter API.
-The backend exposes a FastAPI server with a `/chat` endpoint that streams responses via Server-Sent Events (SSE), and a `/health` endpoint for readiness checks.
-There's also a CLI chatbot you can run from the terminal for quick testing without a browser.
+- **Real-time streaming**: AI responses arrive token-by-token via Server-Sent Events and render instantly as they're generated.
+- **Markdown rendering**: Bold, italic, headers, lists, code blocks, and tables are rendered with react-markdown.
+- **Responsive layout**: Desktop shows a sidebar alongside the chat. Mobile switches between Chat and About views via a pill toggle.
+- **Anchored sidebar**: The About panel stays visible as the chat scrolls, with LLM-generated content describing the app.
+- **Auto-scroll**: Automatically scrolls to the latest message, keeping up with fast token streaming.
+- **Rose Pine theme**: Warm, cohesive light and dark mode with CSS variables.
+- **Floating input bar**: The text input and send button sit in a floating card at the bottom of the chat.
 
 ## Tech stack
 
+- **Frontend**: Next.js 16, React 19, Tailwind CSS v4, react-markdown
 - **Backend**: Python 3.13+, FastAPI, uvicorn, openai (OpenRouter SDK)
-- **Frontend (planned)**: React / Next.js (port 5173)
-- **Dev tooling**: pyright, ruff
 - **API**: OpenRouter Chat Completions API with SSE streaming
+- **Dev tooling**: TypeScript, pyright, ruff
 
 ## Project structure
 
 ```
 WebChat/
-├── BackEnd/               # Python FastAPI backend (functional)
-│   ├── server.py          # FastAPI app — /health and /chat endpoints, CORS
-│   ├── response.py        # OpenRouter API wrapper
-│   ├── main.py            # CLI chatbot (Rich-based)
-│   ├── custom_args.py     # Argparse config for CLI
-│   ├── prompts.py         # System prompt definitions
-│   └── pyproject.toml     # Project config & dependencies
-├── FrontEnd/              # React/Next.js frontend (not yet built)
-├── PLAN.md                # Project plan
-└── LICENSE                # MIT license
+├── FrontEnd/
+│   ├── app/
+│   │   ├── page.tsx           # Single-file chat UI component
+│   │   ├── layout.tsx         # Root layout with metadata & fonts
+│   │   ├── globals.css        # Rose Pine theme CSS variables
+│   │   └── favicon.ico        # Old favicon (replaced by chat.svg)
+│   ├── public/
+│   │   ├── chat.svg           # Chat-bubble SVG favicon
+│   │   └── *.svg              # Next.js default SVGs
+│   ├── package.json           # Deps: next, react, react-markdown, tailwindcss
+│   └── README.md              # Next.js-generated readme
+├── BackEnd/
+│   ├── server.py              # FastAPI app — /sidebar and /chat endpoints (dev)
+│   ├── response.py            # OpenRouter API wrapper
+│   ├── main.py                # CLI chatbot (Rich-based)
+│   ├── custom_args.py         # Argparse config for CLI
+│   ├── prompts.py             # System prompt & app description
+│   └── pyproject.toml         # Project config & dependencies
+├── api/
+│   ├── index.py               # Vercel serverless entry (/api/ route prefix)
+│   └── backend/
+│       ├── response.py        # OpenRouter API wrapper (production)
+│       └── prompts.py         # Prompts (production)
+├── README.md
+└── LICENSE
 ```
 
-## Getting Started (Backend)
+## Getting Started
+
+### Backend
 
 1. **Clone the repo**
 
-```bash
-git clone https://github.com/your-username/WebChat.git
-cd WebChat/BackEnd
-```
+   ```bash
+   git clone https://github.com/your-username/WebChat.git
+   cd WebChat/BackEnd
+   ```
 
 2. **Set up environment**
 
-Create a `.env` file in the `BackEnd/` directory:
+   Create a `.env` file in the `BackEnd/` directory:
 
-```bash
-OPENAI_API_KEY=your-openrouter-api-key
-```
+   ```bash
+   OPENROUTER_API_KEY=your-openrouter-api-key
+   MODEL=openai/gpt-4o-mini
+   ```
 
-Get a key from [openrouter.ai/keys](https://openrouter.ai/keys).
+   Get a key from [openrouter.ai/keys](https://openrouter.ai/keys).
 
 3. **Create a virtual environment**
 
-```bash
-python -m venv .venv
-source .venv/bin/activate
-```
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate
+   ```
 
 4. **Install dependencies**
 
-```bash
-pip install .
-```
+   ```bash
+   pip install .
+   ```
 
-Or if you use uv:
+   Or if you use uv:
 
-```bash
-uv sync
-```
+   ```bash
+   uv sync
+   ```
 
 5. **Run the server**
 
+   ```bash
+   uvicorn server:app --reload
+   ```
+
+   The API will be available at `http://localhost:8000`.
+   The `/health` endpoint returns `{"status": "ok"}`.
+   Send chat requests to `/chat`.
+
+### Frontend
+
+1. **Navigate to the frontend directory**
+
+   ```bash
+   cd WebChat/FrontEnd
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   npm install
+   ```
+
+3. **Set the API URL** (optional — defaults to `http://localhost:8000`)
+
+   Create a `.env.local` file:
+
+   ```
+   NEXT_PUBLIC_API_URL=http://localhost:8000
+   ```
+
+4. **Run the development server**
+
+   ```bash
+   npm run dev
+   ```
+
+   Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Running both together
+
+Start the backend in one terminal:
+
 ```bash
-uvicorn server:app --reload
+cd BackEnd && uvicorn server:app --reload
 ```
 
-The API will be available at `http://localhost:8000`.
-The `/health` endpoint returns `{"status": "ok"}`.
-Send chat requests to `/chat`.
+Start the frontend in another:
+
+```bash
+cd FrontEnd && npm run dev
+```
 
 ## CLI usage
 
 You can also chat from the terminal without a frontend:
 
 ```bash
-python main.py
+cd BackEnd && python main.py
 ```
 
 This uses the Rich library for a formatted chat experience in your terminal — useful for debugging and quick testing.
-
-## Frontend
-
-A React / Next.js frontend is planned but not yet implemented.
-The `FrontEnd/` directory is a placeholder for future work.
-Once built, it will run on port 5173 and the backend CORS is already configured to allow requests from `localhost:5173`.
-
-## What I Learned
-
-This project was built as a learning exercise.
-
-## Future Ideas
-
-- Implement the React/Next.js frontend with real-time streaming UI
-- Add conversation history persistence (SQLite or similar)
-- Support model selection and parameter tuning from the UI
-- Add multi-turn conversation support on the backend
-- Explore tool calling and structured output modes
 
 ## License
 
