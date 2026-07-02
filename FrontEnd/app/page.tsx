@@ -24,14 +24,16 @@ export default function Chat() {
         const reader = res.body!.getReader();
         const dec = new TextDecoder();
         let acc = "";
+        let doneStreaming = false;
         while (true) {
           const { done, value } = await reader.read();
-          if (done) break;
+          if (done || doneStreaming) break;
           for (const line of dec.decode(value).split("\n")) {
             if (line.startsWith("data: ")) {
               const data = line.slice(6);
               if (data === "[DONE]") {
                 setSidebarLoading(false);
+                doneStreaming = true;
                 break;
               }
               acc += data;
@@ -74,15 +76,19 @@ export default function Chat() {
       const reader = res.body!.getReader();
       const decoder = new TextDecoder();
       let accumulated = "";
+      let doneStreaming = false;
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done || doneStreaming) break;
         const text = decoder.decode(value);
         for (const line of text.split("\n")) {
           if (line.startsWith("data: ")) {
             const data = line.slice(6);
-            if (data === "[DONE]") break;
+            if (data === "[DONE]") {
+              doneStreaming = true;
+              break;
+            }
             accumulated += data;
             setMessages((prev) => {
               const next = [...prev];
