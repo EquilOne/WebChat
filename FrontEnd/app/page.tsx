@@ -28,9 +28,12 @@ export default function Chat() {
         while (true) {
           const { done, value } = await reader.read();
           if (done || doneStreaming) break;
+          let eventData: string[] = [];
           for (const line of dec.decode(value).split("\n")) {
             if (line.startsWith("data: ")) {
-              const data = line.slice(6);
+              eventData.push(line.slice(6));
+            } else if (line === "" && eventData.length > 0) {
+              const data = eventData.join("\n");
               if (data === "[DONE]") {
                 setSidebarLoading(false);
                 doneStreaming = true;
@@ -38,6 +41,7 @@ export default function Chat() {
               }
               acc += data;
               setSidebarContent(acc);
+              eventData = [];
             }
           }
         }
@@ -82,9 +86,12 @@ export default function Chat() {
         const { done, value } = await reader.read();
         if (done || doneStreaming) break;
         const text = decoder.decode(value);
+        let eventData: string[] = [];
         for (const line of text.split("\n")) {
           if (line.startsWith("data: ")) {
-            const data = line.slice(6);
+            eventData.push(line.slice(6));
+          } else if (line === "" && eventData.length > 0) {
+            const data = eventData.join("\n");
             if (data === "[DONE]") {
               doneStreaming = true;
               break;
@@ -98,6 +105,7 @@ export default function Chat() {
               };
               return next;
             });
+            eventData = [];
           }
         }
       }
