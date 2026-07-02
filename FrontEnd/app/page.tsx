@@ -32,11 +32,15 @@ export default function Chat() {
         const dec = new TextDecoder();
         let acc = "";
         let doneStreaming = false;
+        let buffer = "";
         while (true) {
           const { done, value } = await reader.read();
           if (done || doneStreaming) break;
+          buffer += dec.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
           let eventData: string[] = [];
-          for (const line of dec.decode(value).split("\n")) {
+          for (const line of lines) {
             if (line.startsWith("data: ")) {
               eventData.push(line.slice(6));
             } else if (line === "" && eventData.length > 0) {
@@ -118,17 +122,24 @@ const handleScroll = () => {
         signal: controller.signal,
       });
 
+      if (!res.ok) {
+        throw new Error(`Server error: ${res.status} ${res.statusText}`);
+      }
+
       const reader = res.body!.getReader();
       const decoder = new TextDecoder();
       let accumulated = "";
       let doneStreaming = false;
+      let buffer = "";
 
       while (true) {
         const { done, value } = await reader.read();
         if (done || doneStreaming) break;
-        const text = decoder.decode(value);
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
         let eventData: string[] = [];
-        for (const line of text.split("\n")) {
+        for (const line of lines) {
           if (line.startsWith("data: ")) {
             eventData.push(line.slice(6));
           } else if (line === "" && eventData.length > 0) {
@@ -152,11 +163,22 @@ const handleScroll = () => {
         }
       }
     } catch (err: unknown) {
-      if (err instanceof Error && err.name !== "AbortError") console.error(err);
+      if (err instanceof Error && err.name !== "AbortError") {
+        console.error(err);
+        setMessages((prev) => {
+          const last = prev[prev.length - 1];
+          if (last?.role === "assistant" && last.content === "") {
+            return prev.slice(0, -1);
+          }
+          return prev;
+        });
+      }
     } finally {
-      setStreaming(false);
-      abortRef.current = null;
-      inputRef.current?.focus();
+      if (abortRef.current === controller) {
+        setStreaming(false);
+        abortRef.current = null;
+        inputRef.current?.focus();
+      }
     }
   };
 
