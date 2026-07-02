@@ -206,12 +206,12 @@ export default function Chat() {
           </div>
 
           <div
-            className={`${tab === "about" ? "hidden md:flex" : "flex"} flex-1 flex-col w-full px-3 sm:px-0 bg-linear-to-br from-(--rp-base) to-(--rp-overlay)`}
+            className={`${tab === "about" ? "hidden md:flex" : "flex"} flex-1 flex-col min-h-0 w-full px-3 sm:px-0 bg-linear-to-br from-(--rp-base) to-(--rp-overlay)`}
           >
             <div
               ref={messagesContainerRef}
               onScroll={handleScroll}
-              className="flex-1 overflow-y-auto p-4 space-y-4">
+              className="flex-1 overflow-y-auto min-h-0 p-4 space-y-4">
               {messages.map((m, i) => (
                 <div
                   key={i}
