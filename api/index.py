@@ -24,12 +24,12 @@ class ChatRequest(BaseModel):
     messages: list[ChatCompletionMessageParam]
 
 
-@app.get("/health")
+@app.get("/api/health")
 async def health():
     return {"status": "ok"}
 
 
-@app.post("/chat")
+@app.post("/api/chat")
 async def chat(request: ChatRequest):
     messages = request.messages
 
@@ -57,7 +57,7 @@ async def chat(request: ChatRequest):
     return response
 
 
-@app.get("/sidebar")
+@app.get("/api/sidebar")
 async def sidebar():
     async def stream():
         completion = await get_response(

@@ -65,11 +65,15 @@ Browser (Next.js)  --POST /chat-->  FastAPI Backend  --POST /v1/chat/completions
 
 sidebar_prompt = f"""You are describing the WebChat application to a new user who just opened the app.
 
-Read the app description below, then summarize the most interesting and impressive parts in 4-6 concise bullet points.
+Read the app description below, then write exactly 5 bullet points covering ALL of these aspects (one bullet each):
 
-Focus on what makes this app interesting: the real-time streaming, the architecture, the design choices, and the Rose Pine theming.
+1. Architecture & stack — how the frontend and backend connect
+2. Real-time streaming — how tokens stream via SSE
+3. Session persistence — how conversation history is maintained
+4. Design & theming — Rose Pine palette and responsive layout
+5. Developer experience — minimal dependencies, no database, no build step
 
-Keep it brief, scannable, and welcoming. No greetings, sign-offs, or markdown headers. Use plain bullet points (dashes).
+Keep each bullet to one line, scannable and welcoming. No greetings, sign-offs, or markdown headers. Use plain dashes. Output exactly 5 bullets — no more, no fewer.
 
 ## App Description
 
