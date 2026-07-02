@@ -73,7 +73,7 @@ Read the app description below, then write exactly 5 bullet points covering ALL 
 4. Design & theming — Rose Pine palette and responsive layout
 5. Developer experience — minimal dependencies, no database, no build step
 
-Keep each bullet to one line, scannable and welcoming. No greetings, sign-offs, or markdown headers. Use plain dashes. Output exactly 5 bullets — no more, no fewer.
+Put each bullet on its own line separated by newlines. Keep each bullet brief and scannable. No greetings, sign-offs, or markdown headers. Use plain dashes. Output exactly 5 bullets — no more, no fewer.
 
 ## App Description
 

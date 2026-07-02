@@ -1,5 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 type Message = { role: "user" | "assistant"; content: string };
@@ -203,7 +205,21 @@ export default function Chat() {
                   }}
                 >
                   <strong>{m.role === "user" ? "You" : "AI"}:</strong>
-                  <p className="mt-1">{m.content}</p>
+                  <div className="prose prose-sm mt-1 max-w-none"
+                    style={{
+                      color: "var(--rp-text)",
+                      "--tw-prose-body": "var(--rp-text)",
+                      "--tw-prose-headings": "var(--rp-text)",
+                      "--tw-prose-bold": "var(--rp-text)",
+                      "--tw-prose-links": "var(--rp-rose)",
+                      "--tw-prose-code": "var(--rp-rose)",
+                      "--tw-prose-pre-bg": "var(--rp-surface)",
+                    } as React.CSSProperties}
+                  >
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {m.content}
+                    </ReactMarkdown>
+                  </div>
                 </div>
               ))}
             </div>
