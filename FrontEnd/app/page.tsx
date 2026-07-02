@@ -18,7 +18,7 @@ export default function Chat() {
     const ctrl = new AbortController();
     (async () => {
       try {
-        const res = await fetch(`${API_URL}/sidebar`, {
+        const res = await fetch(`${API_URL}/api/sidebar`, {
           signal: ctrl.signal,
         });
         const reader = res.body!.getReader();
@@ -62,7 +62,7 @@ export default function Chat() {
     abortRef.current = controller;
 
     try {
-      const res = await fetch(`${API_URL}/chat`, {
+      const res = await fetch(`${API_URL}/api/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
