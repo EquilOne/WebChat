@@ -14,6 +14,7 @@ export default function Chat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const shouldAutoScrollRef = useRef(true);
 
   const [sidebarContent, setSidebarContent] = useState("");
   const [sidebarLoading, setSidebarLoading] = useState(true);
@@ -64,6 +65,7 @@ export default function Chat() {
     const threshold = 50;
     const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
     setShouldAutoScroll(isNearBottom);
+    shouldAutoScrollRef.current = isNearBottom;
   };
 
   useEffect(() => {
@@ -72,12 +74,19 @@ export default function Chat() {
     }
   }, [messages, shouldAutoScroll]);
 
+  const scrollToBottom = (smooth = false) => {
+    if (shouldAutoScrollRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: smooth ? "smooth" : "instant" });
+    }
+  };
+
   const send = async () => {
     if (!input.trim() || streaming) return;
 
     const userMsg: Message = { role: "user", content: input };
     const history = [...messages, userMsg];
     setMessages([...history, { role: "assistant", content: "" }]);
+    requestAnimationFrame(() => scrollToBottom());
     setInput("");
     setStreaming(true);
 
@@ -124,6 +133,7 @@ export default function Chat() {
               };
               return next;
             });
+            requestAnimationFrame(() => scrollToBottom());
             eventData = [];
           }
         }
