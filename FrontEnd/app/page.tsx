@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 type Message = { role: "user" | "assistant"; content: string };
 
@@ -17,7 +18,7 @@ export default function Chat() {
     const ctrl = new AbortController();
     (async () => {
       try {
-        const res = await fetch("http://localhost:8000/sidebar", {
+        const res = await fetch(`${API_URL}/sidebar`, {
           signal: ctrl.signal,
         });
         const reader = res.body!.getReader();
@@ -61,7 +62,7 @@ export default function Chat() {
     abortRef.current = controller;
 
     try {
-      const res = await fetch("http://localhost:8000/chat", {
+      const res = await fetch(`${API_URL}/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
