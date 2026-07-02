@@ -246,7 +246,16 @@ export default function Chat() {
                       "--tw-prose-pre-bg": "var(--rp-surface)",
                     } as React.CSSProperties}
                   >
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        table: ({ children }) => (
+                          <div className="overflow-x-auto">
+                            <table>{children}</table>
+                          </div>
+                        ),
+                      }}
+                    >
                       {m.content}
                     </ReactMarkdown>
                   </div>
