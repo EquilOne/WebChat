@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@plugin "@tailwindcss/typography";
 
 /* Rose Pine Dawn (light) */
 :root {
@@ -44,5 +43,5 @@
 body {
   background: var(--rp-base);
   color: var(--rp-text);
-  font-family: var(--font-sans), sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
 }

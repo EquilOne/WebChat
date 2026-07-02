@@ -1,12 +1,10 @@
-import os
-
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from mangum import Mangum
 from openai.types.chat import ChatCompletionMessageParam
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel
 
 from prompts import app_description, sidebar_prompt, system_prompt
 from response import get_response
@@ -15,15 +13,9 @@ load_dotenv()
 
 app = FastAPI()
 
-allowed_origins_env = os.getenv("ALLOWED_ORIGINS")
-if allowed_origins_env:
-    origins = [o.strip() for o in allowed_origins_env.split(",")]
-else:
-    origins = ["http://localhost:3000", "https://localhost:3000"]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -32,25 +24,15 @@ app.add_middleware(
 class ChatRequest(BaseModel):
     messages: list[ChatCompletionMessageParam]
 
-    @field_validator("messages")
-    @classmethod
-    def cap_messages(cls, v):
-        if len(v) > 50:
-            raise ValueError("Message count exceeds limit of 50")
-        total_chars = sum(len(str(m)) for m in v)
-        if total_chars > 50000:
-            raise ValueError("Total message characters exceed limit of 50000")
-        return v
 
-
-@app.get("/api/health")
+@app.get("/health")
 async def health():
     return {"status": "ok"}
 
 
-@app.post("/api/chat")
+@app.post("/chat")
 async def chat(request: ChatRequest):
-    messages = [m for m in request.messages if m.get("role") in ("user", "assistant")]
+    messages = request.messages
 
     full_messages = [
         {"role": "system", "content": system_prompt},
@@ -61,28 +43,24 @@ async def chat(request: ChatRequest):
         *messages,
     ]
 
+    collected = []
+
     async def stream():
-        try:
-            completion = await get_response(full_messages, stream=True)
-            async for chunk in completion:
-                token = chunk.choices[0].delta.content
-                if token:
-                    for line in token.split("\n"):
-                        yield f"data: {line}\n"
-                    yield "\n"
-        except Exception as e:
-            yield f'data: {{"error": "{str(e)}"}}\n\n'
+        completion = await get_response(full_messages, stream=True)
+        async for chunk in completion:
+            token = chunk.choices[0].delta.content
+            if token:
+                collected.append(token)
+                for line in token.split("\n"):
+                    yield f"data: {line}\n"
+                yield "\n"
         yield "data: [DONE]\n\n"
 
-    response = StreamingResponse(
-        stream(),
-        media_type="text/event-stream",
-        headers={"X-Accel-Buffering": "no", "Cache-Control": "no-cache"},
-    )
+    response = StreamingResponse(stream(), media_type="text/event-stream")
     return response
 
 
-@app.get("/api/sidebar")
+@app.get("/sidebar")
 async def sidebar():
     async def stream():
         completion = await get_response(

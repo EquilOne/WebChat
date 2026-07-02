@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { MessageBubble } from "./message-bubble";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 type Message = { role: "user" | "assistant"; content: string };
@@ -12,6 +13,7 @@ export default function Chat() {
   const abortRef = useRef<AbortController | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const shouldAutoScrollRef = useRef(true);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -30,15 +32,11 @@ export default function Chat() {
         const dec = new TextDecoder();
         let acc = "";
         let doneStreaming = false;
-        let buffer = "";
         while (true) {
           const { done, value } = await reader.read();
           if (done || doneStreaming) break;
-          buffer += dec.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
           let eventData: string[] = [];
-          for (const line of lines) {
+          for (const line of dec.decode(value).split("\n")) {
             if (line.startsWith("data: ")) {
               eventData.push(line.slice(6));
             } else if (line === "" && eventData.length > 0) {
@@ -62,31 +60,24 @@ export default function Chat() {
     return () => ctrl.abort();
   }, []);
 
-  // Focus input on mount
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
-
   const handleScroll = () => {
     const el = messagesContainerRef.current;
     if (!el) return;
     const threshold = 50;
-    const isNearBottom =
-      el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+    const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+    setShouldAutoScroll(isNearBottom);
     shouldAutoScrollRef.current = isNearBottom;
   };
 
   useEffect(() => {
-    if (shouldAutoScrollRef.current) {
+    if (shouldAutoScroll) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages]);
+  }, [messages, shouldAutoScroll]);
 
   const scrollToBottom = (smooth = false) => {
     if (shouldAutoScrollRef.current) {
-      messagesEndRef.current?.scrollIntoView({
-        behavior: smooth ? "smooth" : "instant",
-      });
+      messagesEndRef.current?.scrollIntoView({ behavior: smooth ? "smooth" : "instant" });
     }
   };
 
@@ -115,24 +106,17 @@ export default function Chat() {
         signal: controller.signal,
       });
 
-      if (!res.ok) {
-        throw new Error(`Server error: ${res.status} ${res.statusText}`);
-      }
-
       const reader = res.body!.getReader();
       const decoder = new TextDecoder();
       let accumulated = "";
       let doneStreaming = false;
-      let buffer = "";
 
       while (true) {
         const { done, value } = await reader.read();
         if (done || doneStreaming) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        buffer = lines.pop() || "";
+        const text = decoder.decode(value);
         let eventData: string[] = [];
-        for (const line of lines) {
+        for (const line of text.split("\n")) {
           if (line.startsWith("data: ")) {
             eventData.push(line.slice(6));
           } else if (line === "" && eventData.length > 0) {
@@ -156,22 +140,11 @@ export default function Chat() {
         }
       }
     } catch (err: unknown) {
-      if (err instanceof Error && err.name !== "AbortError") {
-        console.error(err);
-        setMessages((prev) => {
-          const last = prev[prev.length - 1];
-          if (last?.role === "assistant" && last.content === "") {
-            return prev.slice(0, -1);
-          }
-          return prev;
-        });
-      }
+      if (err instanceof Error && err.name !== "AbortError") console.error(err);
     } finally {
-      if (abortRef.current === controller) {
-        setStreaming(false);
-        abortRef.current = null;
-        inputRef.current?.focus();
-      }
+      setStreaming(false);
+      abortRef.current = null;
+      inputRef.current?.focus();
     }
   };
 
@@ -193,9 +166,9 @@ export default function Chat() {
 
   return (
     <div className="flex h-screen w-full bg-(--rp-base)">
-      <div className="flex mx-auto w-full max-w-[1400px]">
+      <div className="flex mx-auto w-full max-w-350">
         <aside
-          className="hidden md:block w-72 shrink-0 overflow-hidden p-4 border"
+          className="hidden md:block w-72 shrink-0 overflow-hidden p-4 border-r"
           style={{
             background: "var(--rp-base)",
             borderColor: "var(--rp-highlight-high)",
@@ -212,8 +185,6 @@ export default function Chat() {
 
         <div className="flex-1 flex flex-col">
           <div
-            role="tablist"
-            aria-label="Navigation tabs"
             className="md:hidden flex justify-center gap-2 p-2 border-b"
             style={{
               background: "var(--rp-base)",
@@ -221,10 +192,6 @@ export default function Chat() {
             }}
           >
             <button
-              id="chat-tab"
-              role="tab"
-              aria-selected={tab === "chat"}
-              type="button"
               onClick={() => setTab("chat")}
               className="px-5 py-1.5 rounded-full text-sm font-medium transition-colors"
               style={{
@@ -236,10 +203,6 @@ export default function Chat() {
               Chat
             </button>
             <button
-              id="about-tab"
-              role="tab"
-              aria-selected={tab === "about"}
-              type="button"
               onClick={() => setTab("about")}
               className="px-5 py-1.5 rounded-full text-sm font-medium transition-colors"
               style={{
@@ -255,20 +218,50 @@ export default function Chat() {
           </div>
 
           <div
-            role="tabpanel"
-            aria-labelledby="chat-tab"
             className={`${tab === "about" ? "hidden md:flex" : "flex"} flex-1 flex-col min-h-0 w-full px-3 sm:px-0 bg-linear-to-br from-(--rp-base) to-(--rp-overlay)`}
           >
             <div
               ref={messagesContainerRef}
               onScroll={handleScroll}
-              role="log"
-              aria-live="polite"
-              aria-relevant="additions"
-              className="flex-1 overflow-y-auto min-h-0 p-4 space-y-4"
-            >
+              className="flex-1 overflow-y-auto min-h-0 p-4 space-y-4">
               {messages.map((m, i) => (
-                <MessageBubble key={i} message={m} />
+                <div
+                  key={i}
+                  className={`p-3 rounded w-fit max-w-[85%] sm:max-w-[75%] min-w-30 ${m.role === "user" ? "ml-auto mr-3 sm:mr-12" : "mr-auto ml-3 sm:ml-12"}`}
+                  style={{
+                    background:
+                      m.role === "user"
+                        ? "var(--rp-pine)"
+                        : "var(--rp-highlight-med)",
+                    color: m.role === "user" ? "#f4ede8" : "var(--rp-text)",
+                  }}
+                >
+                  <strong>{m.role === "user" ? "You" : "AI"}:</strong>
+                  <div className="prose prose-sm mt-1 w-full max-w-full"
+                    style={{
+                      color: "var(--rp-text)",
+                      "--tw-prose-body": "var(--rp-text)",
+                      "--tw-prose-headings": "var(--rp-text)",
+                      "--tw-prose-bold": "var(--rp-text)",
+                      "--tw-prose-links": "var(--rp-rose)",
+                      "--tw-prose-code": "var(--rp-rose)",
+                      "--tw-prose-pre-bg": "var(--rp-surface)",
+                    } as React.CSSProperties}
+                  >
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        table: ({ children }) => (
+                          <div className="overflow-x-auto w-full max-w-full">
+                            <table>{children}</table>
+                          </div>
+                        ),
+                      }}
+                    >
+                      {m.content}
+                    </ReactMarkdown>
+                  </div>
+                </div>
               ))}
               <div ref={messagesEndRef} />
             </div>
@@ -279,7 +272,6 @@ export default function Chat() {
             >
               <input
                 ref={inputRef}
-                aria-label="Chat message"
                 className="flex-1 border rounded p-2 border-(--rp-highlight-high) hover:border-(--rp-rose) hover:shadow-[0_0_8px_var(--rp-rose)] focus:border-(--rp-rose) focus:shadow-[0_0_3px_var(--rp-rose)] focus:hover:shadow-[0_0_8px_var(--rp-rose)] focus:outline-none transition-colors duration-200"
                 style={{
                   background: "var(--rp-surface)",
@@ -287,13 +279,17 @@ export default function Chat() {
                 }}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+                onKeyDown={(e) => e.key === "Enter" && send()}
+                onBlur={(e) => {
+                  if (e.relatedTarget === null) {
+                    e.target.focus();
+                  }
+                }}
                 disabled={streaming}
                 placeholder="Type your message..."
+                autoFocus
               />
               <button
-                type="button"
-                aria-label="Send message"
                 className="text-white px-4 py-2 rounded disabled:opacity-50"
                 style={{ background: "var(--rp-iris)" }}
                 onClick={send}
@@ -305,8 +301,6 @@ export default function Chat() {
           </div>
 
           <div
-            role="tabpanel"
-            aria-labelledby="about-tab"
             className={`${tab === "chat" ? "hidden" : ""} md:hidden flex-1 overflow-y-auto p-4`}
             style={{ background: "var(--rp-base)" }}
           >
